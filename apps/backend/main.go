@@ -26,6 +26,17 @@ func main() {
 
 	// Router
 	router := gin.Default()
+	router.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "http://localhost:3000")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type")
+		if c.Request.Method == "OPTIONS" {
+			c.Status(204)
+			c.Abort()
+			return
+		}
+		c.Next()
+	})
 
 	routes.SetupRoutes(
 		router,
