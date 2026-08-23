@@ -4,6 +4,7 @@ import (
 	"backend/dto"
 	"backend/service"
 	"backend/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -23,6 +24,7 @@ func NewMovieHandler(s service.MovieService) *MovieHandler {
 func (h *MovieHandler) CreateMovie(c *gin.Context) {
 	var req dto.CreateMovieRequest
 
+	fmt.Println("handler", c.Request)
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
