@@ -11,5 +11,5 @@ type MovieRepo interface {
 	GetMovies() ([]models.Movies, error)
 	DeleteMovie(movieId int) error
 	CreateComment(comment dto.CreateComments) error
-	GetAllComment(movieId int, offset int , limit int)([]models.Comment, error) 
+	GetAllComment(movieId int, offset int, limit int) ([]models.Comment, error)
 }

@@ -21,6 +21,7 @@ func (r *CommentService) AddCommentOnMovie(comment dto.CreateComments) (string, 
 	if err != nil {
 		return "some error occur", err
 	}
+	//here we will call our ai model so our ai model will reply according the comment setiments
 	return "success", nil
 }
 
