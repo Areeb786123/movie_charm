@@ -15,7 +15,7 @@ def health():
         "status":"ok"
     }        
     
-@app.post("/analyze-comment")
+@app.post("/analyze")
 def analyze_comment(request: CommentRequest):
 
     result = graph.invoke({
@@ -23,5 +23,6 @@ def analyze_comment(request: CommentRequest):
     })
 
     return {
-        "message": result["message"]
+        "message": result["message"],
+        "sentiment_type": result["sentiment"]
     }   

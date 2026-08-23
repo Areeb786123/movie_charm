@@ -1,0 +1,17 @@
+services:
+  backend:
+    build:
+      context: ./apps/backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./apps/backend/.env  
+  ai-service:
+    build:
+      context: ./apps/ai-service
+    ports:
+       - "8000:8000"  
+    env_file:
+      - ./apps/ai-service/llm/.env 
+
+# http://llm:8000

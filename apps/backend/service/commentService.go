@@ -16,13 +16,18 @@ func CreateNewCommentService(repository repository.MovieRepo) *CommentService {
 	}
 }
 
-func (r *CommentService) AddCommentOnMovie(comment dto.CreateComments) (string, error) {
+func (r *CommentService) AddCommentOnMovie(comment dto.CreateComments) (*models.Sentiment, error) {
 	err := r.repo.CreateComment(comment)
 	if err != nil {
-		return "some error occur", err
+		return nil, err
 	}
 	//here we will call our ai model so our ai model will reply according the comment setiments
-	return "success", nil
+	resp, err := SendSentiment(comment.Comment)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (r *CommentService) GetAllComment(movieId int, offset int, limit int) ([]models.Comment, error) {
