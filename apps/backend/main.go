@@ -6,13 +6,15 @@ import (
 	"backend/repository"
 	"backend/routes"
 	"backend/service"
-
+	"log"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	db := database.ConnectDatabase()
+	log.Println("🔥🔥🔥 MY NEW CODE IS RUNNING")
 
+	db := database.ConnectDatabase()
+	database.ConnectRedis()
 	// 2. Repositories
 	movieRepo := repository.CreateNewMovieRepo(db)
 

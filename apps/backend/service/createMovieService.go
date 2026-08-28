@@ -1,10 +1,16 @@
 package service
 
 import (
+	"backend/database"
 	"backend/dto"
 	"backend/models"
 	"backend/repository"
+	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
+	"time"
 )
 
 type MovieService struct {
@@ -31,9 +37,39 @@ func (r *MovieService) CreateMovie(movie dto.CreateMovieRequest) error {
 }
 
 func (r *MovieService) GetAllMovies() ([]models.Movies, error) {
+	cacheKey := models.GET_ALL_MOVIES
+	ctx := context.Background()
+	
+	cacheData, err := database.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+		var movies []models.Movies
+		err := json.Unmarshal([]byte(cacheData), &movies)
+		if err != nil {
+			return nil, err
+		}
+		log.Println("Data coming from redis")
+		return movies, nil
+	}
+
+	//redis fail now get data from data it means data does not exis in redis
 	result, err := r.repo.GetMovies()
+	fmt.Println("Data coming from DB")
 	if err != nil {
 		return nil, err
+	}
+	//also store result in redis
+	data, err := json.Marshal(result)
+	if err == nil {
+		err := database.RedisClient.Set(
+			ctx,
+			cacheKey,
+			data,
+			5*time.Minute,
+		).Err()
+		log.Println("data saved iun redis successfully")
+		if err != nil {
+			log.Println("some error occur saving data into redis ", err)
+		}
 	}
 	return result, nil
 }

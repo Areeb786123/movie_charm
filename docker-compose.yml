@@ -12,8 +12,15 @@ services:
       context: ./apps/backend
     ports:
       - "8080:8080"
+    environment:
+      REDIS_ADDR: redis:6379  
     env_file:
       - ./apps/backend/.env  
+
+  redis:
+   image: redis:7-alpine
+   ports:
+    - "6380:6379"    
   ai-service:
     build:
       context: ./apps/ai-service
