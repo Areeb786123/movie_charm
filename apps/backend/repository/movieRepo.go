@@ -3,6 +3,7 @@ package repository
 import (
 	"backend/dto"
 	"backend/models"
+	"context"
 )
 
 type MovieRepo interface {
@@ -12,4 +13,5 @@ type MovieRepo interface {
 	DeleteMovie(movieId int) error
 	CreateComment(comment dto.CreateComments) error
 	GetAllComment(movieId int, offset int, limit int) ([]models.Comment, error)
+	RateMovie(ctx context.Context, data dto.CreateRating) error
 }

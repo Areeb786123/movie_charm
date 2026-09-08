@@ -10,6 +10,7 @@ func SetupRoutes(
 	router *gin.Engine,
 	movieHandler *handler.MovieHandler,
 	commentHandler *handler.CommentHandler,
+	ratingHandler *handler.RatingHandler,
 ) {
 
 	// Movies
@@ -21,4 +22,7 @@ func SetupRoutes(
 	// Comments
 	router.POST("/movies/:movieId/comments", commentHandler.CreateComment)
 	router.GET("/movies/:movieId/comments", commentHandler.GetAllComments)
+
+	// Rating
+	router.POST("/movies/:movieId/rating", ratingHandler.RateMovie)
 }

@@ -16,3 +16,8 @@ type CreateComments struct {
 type AIRequest struct {
 	Comment string `json:"comment"`
 }
+
+type CreateRating struct {
+	MovieID int `json:"movieID"`
+	Rating  int `json:"rating" binding:"required"`
+}

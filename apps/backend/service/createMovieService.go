@@ -27,12 +27,12 @@ func (r *MovieService) CreateMovie(movie dto.CreateMovieRequest) error {
 		return errors.New("movie name or movie uploaded_by is required")
 	}
 
-	result := r.repo.CreateMovie(&movie)
+	err := r.repo.CreateMovie(&movie)
 
-	if result != nil {
-		return errors.New(result.Error())
+	if err != nil {
+		return errors.New(err.Error())
 	}
-
+	// if not error also save data in redis 
 	return nil
 }
 

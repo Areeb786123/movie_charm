@@ -3,11 +3,21 @@ package main
 import (
 	"backend/database"
 	"backend/handler"
+	"backend/kafka"
 	"backend/repository"
+	"backend/repository/outbox"
 	"backend/routes"
 	"backend/service"
-	"log"
+	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
 )
 
 func main() {
@@ -21,10 +31,21 @@ func main() {
 	// 3. Services
 	movieService := service.CreateNewMovieService(movieRepo)
 	commentService := service.CreateNewCommentService(movieRepo)
+	ratingService := service.CreateRatingService(movieRepo)
 
 	// 4. Handlers
 	movieHandler := handler.NewMovieHandler(*movieService)
 	commentHandler := handler.NewCommentHandler(*commentService)
+	ratingHandler := handler.CreateRatingHandler(ratingService)
+
+	brokers := strings.Split(getEnv("KAFKA_BROKERS", "localhost:9092"), ",")
+	producer := kafka.NewKafkaProducer(brokers, "movie-rated")
+	defer producer.Close()
+	worker := kafka.NewOutboxWorker(outbox.CreateOutboxRepository(db), producer)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go runOutboxWorker(ctx, worker)
 
 	// Router
 	router := gin.Default()
@@ -44,8 +65,44 @@ func main() {
 		router,
 		movieHandler,
 		commentHandler,
+		ratingHandler,
 	)
 
-	// Start server
-	router.Run(":8080")
+	server := &http.Server{Addr: ":8080", Handler: router}
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("HTTP server shutdown failed: %v", err)
+		}
+	}()
+
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatal("HTTP server failed:", err)
+	}
+}
+
+func runOutboxWorker(ctx context.Context, worker *kafka.OutboxWorker) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		if err := worker.Process(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			log.Printf("outbox worker error: %v", err)
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
+func getEnv(key, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+		return value
+	}
+	return fallback
 }

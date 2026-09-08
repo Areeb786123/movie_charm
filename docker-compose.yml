@@ -28,5 +28,68 @@ services:
        - "8000:8000"  
     env_file:
       - ./apps/ai-service/llm/.env 
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # Kafka server ka unique ID
+      # Abhi hum sirf 1 Kafka server chala rahe hain
+      KAFKA_NODE_ID: 1
+
+      # Kafka ka role:
+      # broker      -> messages ko store/read/write karta hai
+      # controller  -> Kafka cluster ko manage karta hai
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # Kafka kis port par connections accept karega
+      # 9092 -> Go application / Kafka clients ke liye
+      # 9093 -> Kafka controller ke internal communication ke liye
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+
+      # Kafka clients ko batata hai ki Kafka ko kis address par access karna hai
+      # Hamari Go app host machine par chal rahi hai,
+      # isliye localhost:9092 use kar rahe hain
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+
+      # Controller communication ke liye CONTROLLER listener use hoga
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      # Har listener ka security protocol define karta hai
+      # Abhi local development ke liye PLAINTEXT use kar rahe hain
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+
+      # Kafka controller ki identity aur address
+      # 1 -> Kafka node ID
+      # kafka:9093 -> Docker network ke andar Kafka ka address
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      # Kafka ke internal consumer-offset topic ki
+      # kitni replicas rakhi jayengi
+      # 1 Kafka broker hai, isliye 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      # Kafka transaction state log ki replication
+      # Local setup mein sirf 1 broker hai
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+      # Transaction state ke liye minimum
+      # in-sync replicas required
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # Consumer group ke initial rebalance mein
+      # kitna delay karna hai (milliseconds)
+      # 0 = koi initial delay nahi
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      # New topics ke liye default 3 partitions
+      # Example:
+      # movie-rated
+      #   ├── Partition 0
+      #   ├── Partition 1
+      #   └── Partition 2
+      KAFKA_NUM_PARTITIONS: 3
+      
 
 # http://llm:8000
